@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Color Grid Creator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0;
+      padding: 0;
+      background: #f4f4f4;
+    }
+    .hidden { display: none; }
+    #landing, #daily-challenge, #free-play { text-align: center; margin-top: 20px; }
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(15, 30px);
+      grid-template-rows: repeat(15, 30px);
+      gap: 0;
+      margin: 20px auto;
+    }
+    .cell {
+      width: 30px;
+      height: 30px;
+      background-color: white;
+    }
+    #target {
+      margin: 20px auto;
+    }
+    .controls { text-align: center; margin: 10px; }
+    button, input { margin: 5px; padding: 10px; font-size: 16px; }
+  </style>
+</head>
+<body>
+  <!-- Landing Screen -->
+  <div id="landing">
+    <h1>Color Grid Creator</h1>
+    <button id="dailyBtn">Daily Challenge</button>
+    <button id="freePlayBtn">Free Play</button>
+  </div>
+
+  <!-- Daily Challenge Screen -->
+  <div id="daily-challenge" class="hidden">
+    <h1>Daily Challenge</h1>
+    <div id="target-container">
+      <h3>Target Design</h3>
+      <canvas id="target" width="450" height="450"></canvas>
+    </div>
+    <div id="grid"></div>
+    <button onclick="returnToLanding()">Back</button>
+  </div>
+
+  <!-- Free Play Screen -->
+  <div id="free-play" class="hidden">
+    <h1>Free Play</h1>
+    <div id="grid"></div>
+    <div class="controls">
+      <button id="save">Save Pattern</button>
+      <input id="patternInput" type="text" placeholder="Paste pattern here">
+      <button id="load">Load Pattern</button>
+    </div>
+    <button onclick="returnToLanding()">Back</button>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const gridSize = 15;
+      const colors = [
+        "#FFFFFF", "#89CFF0", "#A8E6CF", "#FFD97D",
+        "#FF6F61", "#D4A5FF", "#FFB385", "#98FB98"
+      ];
+      const gridContainer = document.getElementById("grid");
+
+      // Toggle screens
+      const landing = document.getElementById("landing");
+      const dailyChallenge = document.getElementById("daily-challenge");
+      const freePlay = document.getElementById("free-play");
+      document.getElementById("dailyBtn").addEventListener("click", () => showScreen(dailyChallenge));
+      document.getElementById("freePlayBtn").addEventListener("click", () => showScreen(freePlay));
+
+      function showScreen(screen) {
+        landing.classList.add("hidden");
+        dailyChallenge.classList.add("hidden");
+        freePlay.classList.add("hidden");
+        screen.classList.remove("hidden");
+        initializeGrid();
+      }
+
+      function returnToLanding() {
+        landing.classList.remove("hidden");
+        dailyChallenge.classList.add("hidden");
+        freePlay.classList.add("hidden");
+        gridContainer.innerHTML = ""; // Clear grid
+      }
+
+      // Initialize grid
+      let grid = Array(gridSize).fill().map(() => Array(gridSize).fill(0));
+      function initializeGrid() {
+        gridContainer.innerHTML = ""; // Clear grid for reuse
+        for (let i = 0; i < gridSize; i++) {
+          for (let j = 0; j < gridSize; j++) {
+            const cell = document.createElement("div");
+            cell.className = "cell";
+            cell.dataset.row = i;
+            cell.dataset.col = j;
+
+            // Add hover event for coloring
+            cell.addEventListener("mouseover", () => {
+              const row = parseInt(cell.dataset.row);
+              const col = parseInt(cell.dataset.col);
+              grid[row][col] = (grid[row][col] + 1) % colors.length;
+              cell.style.backgroundColor = colors[grid[row][col]];
+            });
+
+            gridContainer.appendChild(cell);
+          }
+        }
+      }
+
+      // Save/Load for Free Play
+      document.getElementById("save").addEventListener("click", () => {
+        const compressed = btoa(String.fromCharCode(...grid.flat()));
+        alert("Pattern saved: " + compressed);
+      });
+
+      document.getElementById("load").addEventListener("click", () => {
+        const patternInput = document.getElementById("patternInput").value;
+        const decoded = Array.from(atob(patternInput)).map(c => c.charCodeAt(0));
+        grid = Array.from({ length: gridSize }, (_, i) => decoded.slice(i * gridSize, (i + 1) * gridSize));
+        initializeGrid();
+      });
+
+      // Render Target Design
+      const targetCanvas = document.getElementById("target");
+      const targetCtx = targetCanvas.getContext("2d");
+      const targetDesign = [
+        [0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0],
+        [1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+        [1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0],
+        [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+        [0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+        [0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0],
+        [0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+        [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+        [1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0],
+        [1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+        [0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0],
+      ];
+      function renderTarget() {
+        const cellSize = targetCanvas.width / gridSize;
+        targetDesign.forEach((row, i) => {
+          row.forEach((colorIndex, j) => {
+            targetCtx.fillStyle = colors[colorIndex];
+            targetCtx.fillRect(j * cellSize, i * cellSize, cellSize, cellSize);
+          });
+        });
+      }
+      renderTarget();
+    });
+  </script>
+</body>
+</html>
